@@ -34,9 +34,24 @@ BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=recovery
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 BOARD_KERNEL_PAGESIZE := 4096
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
-TARGET_KERNEL_ARCH := arm64
-TARGET_KERNEL_CONFIG := vendor/xiaomi/mi845_defconfig
-TARGET_KERNEL_SOURCE := kernel/xiaomi/sdm845
+# ── GKI 形态:改用预编译内核 ──────────────────────────────────
+# 原来的三行是从厂商 4.9 源码构建单体内核:
+#   TARGET_KERNEL_ARCH := arm64
+#   TARGET_KERNEL_CONFIG := vendor/xiaomi/mi845_defconfig
+#   TARGET_KERNEL_SOURCE := kernel/xiaomi/sdm845
+# GKI 内核是独立构建的(ACK android15-6.6 + 自己的配置 + 162 个模块),
+# 不在 ROM 源码树里,所以走预编译。
+#
+# prebuilt/Image.gz-dtb 的来源:本仓库的 pack-boot.sh 产出的 boot.img 的内核段,
+# 即 gzip(Image) + 追加的 5 个 DTB(board-id 0x28–0x2c)。
+# 与 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb 的格式一致。
+#
+# 路径用本文件既有的 COMMON_PATH(第 7 行定义),不用 $(LOCAL_PATH)
+# —— BoardConfig 语境下 LOCAL_PATH 未必有定义,是空的话路径会变成
+# /prebuilt/... 而构建失败。
+#
+# ⚠️ 改 DTS 要重跑 pack-boot.sh 并更新这个文件 —— 不是重编 ROM。
+TARGET_PREBUILT_KERNEL := $(COMMON_PATH)/prebuilt/Image.gz-dtb
 
 # Platform
 TARGET_BOARD_PLATFORM := sdm845
